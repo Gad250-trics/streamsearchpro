@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>StreamSearch Pro - PEST Technology | Multi-Platform Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-card: rgba(255,255,255,0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --accent: #22c55e;
+            --accent-dark: #16a34a;
+            --border: rgba(255,255,255,0.1);
+            --sidebar-width: 280px;
+        }
+
+        body.light {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border: rgba(0,0,0,0.1);
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            z-index: 1001;
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pest-badge {
+            display: inline-block;
+            background: var(--accent);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 8px;
+            color: white;
+            -webkit-text-fill-color: white;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 24px;
+            font-size: 18px;
+        }
+
+        .platform-selector {
+            margin: 20px 12px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+        }
+
+        .platform-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .platform-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .platform-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            transition: margin 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .menu-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .search-area {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 18px;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .url-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 10px 18px;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .extract-btn {
+            padding: 8px 20px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .extract-btn:hover {
+            opacity: 0.85;
+        }
+
+        .theme-toggle {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, rgba(34,197,94,0.1), transparent);
+        }
+
+        .hero h1 {
+            font-size: 36px;
+            font-weight: 800;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .backend-status {
+            display: inline-block;
+            padding: 6px 14px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+
+        .status-online { color: #22c55e; }
+        .status-offline { color: #ef4444; }
+
+        .container {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .video-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .platform-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .platform-youtube { background: #ff0000; }
+        .platform-facebook { background: #1877f2; }
+        .platform-tiktok { background: #000000; }
+
+        .thumbnail {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .video-info {
+            padding: 14px;
+        }
+
+        .video-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-channel {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .quality-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .quality-btn.audio {
+            background: #8b5cf6;
+        }
+
+        .quality-btn:hover {
+            opacity: 0.85;
+            transform: translateY(-2px);
+        }
+
+        .quality-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            margin-top: 12px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 10px;
+            color: var(--accent);
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .download-status {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .player-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .player-modal.active {
+            display: flex;
+        }
+
+        .player-container {
+            width: 90%;
+            max-width: 1000px;
+            position: relative;
+        }
+
+        .player-container video {
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .artist-photo {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--border);
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .video-side-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quality-btn.audio-only {
+            background: #f97316;
+        }
+
+        .play-audio-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .play-audio-btn {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .close-player {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 50px;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1003;
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .pest-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .pest-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .top-bar {
+                padding: 12px 16px;
+            }
+            .container {
+                padding: 16px;
+            }
+            .video-grid {
+                gap: 15px;
+            }
+            .hero h1 {
+                font-size: 24px;
+            }
+            .hero p {
+                font-size: 14px;
+            }
+            .url-input-area {
+                flex-direction: column;
+            }
+            .section-title {
+                font-size: 18px;
+            }
+            /* Kuri smartphone */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+    padding: 10px;
+  }
+  /* ubundi buryo bwo guhuza */
+}
+        }
+
+        @media (min-width: 769px) {
+            .menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="logo">Stream<span>Search</span><span class="pest-badge">PEST</span></div>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">Multi-Platform Video Downloader</p>
+    </div>
+    
+    <div class="platform-selector">
+        <div style="font-size: 12px; margin-bottom: 8px;">🔍 Search Platform</div>
+        <div class="platform-buttons">
+            <button class="platform-btn active" data-platform="all">🌐 All</button>
+            <button class="platform-btn" data-platform="youtube">▶️ YouTube</button>
+            <button class="platform-btn" data-platform="facebook">📘 Facebook</button>
+            <button class="platform-btn" data-platform="tiktok">🎵 TikTok</button>
+        </div>
+    </div>
+    
+    <div class="nav-item active" data-tab="home">
+        <i class="fa fa-home"></i> <span>Home</span>
+    </div>
+    <div class="nav-item" data-tab="trending">
+        <i class="fa fa-fire"></i> <span>Trending</span>
+    </div>
+    <div class="nav-item" data-tab="downloads">
+        <i class="fa fa-download"></i> <span>My Downloads</span>
+    </div>
+    <div class="nav-item" data-tab="pest">
+        <i class="fa fa-cogs"></i> <span>PEST Settings</span>
+    </div>
+    <div class="nav-item" id="clearCache">
+        <i class="fa fa-trash"></i> <span>Clean Cache</span>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="main-content" id="mainContent">
+    <div class="top-bar">
+        <button class="menu-toggle" id="menuToggle">
+            <i class="fa fa-bars"></i>
+        </button>
+        <div class="search-area">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search videos, music, artists..." onkeypress="if(event.key==='Enter') searchMultiPlatform()">
+            <div class="url-input-area">
+                <input type="text" class="url-input" id="urlInput" placeholder="Or paste any video link (YouTube, Facebook, TikTok...)">
+                <button class="extract-btn" onclick="extractFromLink()">Extract</button>
+            </div>
+        </div>
+        <button class="theme-toggle" id="themeToggle">🌙</button>
+    </div>
+
+    <div class="hero">
+        <h1>Download & Watch <span>Videos</span> <i class="fa fa-youtube-play" style="color: #ff0000;"></i></h1>
+        <p>From YouTube, Facebook, TikTok - Any platform, any quality!</p>
+        <div class="backend-status" id="backendStatus">
+            🔌 Backend: <span id="backendStatusText">Checking...</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title" id="sectionTitle"><i class="fa fa-search"></i> Search Results</h2>
+            <button class="extract-btn" id="batchDownloadBtn" style="display: none;" onclick="batchDownload()">📦 Batch Download</button>
+        </div>
+        <div id="loader" class="loader"><div class="spinner"></div><p>Loading, please wait...</p></div>
+        <div id="results" class="video-grid"></div>
+    </div>
+</div>
+
+<div class="player-modal" id="playerModal">
+    <div class="player-container">
+        <button class="close-player" onclick="closePlayer()"><i class="fa fa-times"></i></button>
+        <video id="playerVideo" controls style="display:none;"></video>
+        <audio id="playerAudio" controls style="display:none; width:100%;"></audio>
+    </div>
+</div>
+</div>
+
+<div class="notification" id="notification">🚀 StreamSearch Pro with PEST is ready!</div>
+
+<script>
+    // Firebase configuration (using CDN instead of module)
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXSvVa51307T_eHJgy9w4PLSmiLeLtCcE0",
+        authDomain: "dawnloader-c715c.firebaseapp.com",
+        projectId: "dawnloader-c715c",
+        storageBucket: "dawnloader-c715c.appspot.com",
+        messagingSenderId: "206688024935",
+        appId: "1:206688024935:web:66a4487b4fdf9ce023d7c2",
+        measurementId: "G-7VNP2Q7819"
+    };
+
+    // Initialize Firebase (will be loaded from CDN)
+    let db = null;
+    let firebaseInitialized = false;
+
+    // Load Firebase SDK dynamically
+    function loadFirebase() {
+        return new Promise((resolve, reject) => {
+            if (typeof firebase !== 'undefined') {
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js';
+            script.onload = () => {
+                const analyticsScript = document.createElement('script');
+                analyticsScript.src = 'https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js';
+                analyticsScript.onload = () => {
+                    resolve();
+                };
+                analyticsScript.onerror = reject;
+                document.head.appendChild(analyticsScript);
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    // Initialize Firebase app
+    async function initFirebase() {
+        try {
+            await loadFirebase();
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                firebaseInitialized = true;
+                console.log("🔥 Firebase initialized successfully!");
+                
+                // Test Firestore connection
+                try {
+                    await db.collection('test').doc('connection').set({ timestamp: new Date().toISOString() });
+                    console.log("✅ Firestore connection successful!");
+                } catch(e) {
+                    console.warn("⚠️ Firestore connection issue:", e.message);
+                }
+            }
+        } catch(error) {
+            console.error("❌ Firebase initialization error:", error);
+        }
+    }
+
+    // Log to Firebase
+    async function logToFirebase(collectionName, data) {
+        if (!firebaseInitialized || !db) {
+            console.log("Firebase not initialized, skipping log");
+            return;
+        }
+        try {
+            await db.collection(collectionName).add({
+                ...data,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            });
+            console.log(`✅ Logged to Firebase: ${collectionName}`);
+        } catch(error) {
+            console.error("❌ Firebase log error:", error);
+        }
+    }
+
+    const BACKEND_URL = "http://localhost:5000";
+    let currentTab = 'home';
+    let currentSearchQuery = '';
+    let selectedPlatform = 'all';
+    let currentResults = [];
+
+    async function checkBackend() {
+        const span = document.getElementById('backendStatusText');
+        try {
+            const res = await fetch(`${BACKEND_URL}/health`);
+            if(res.ok) span.innerHTML = '<span class="status-online">✅ Online - PEST Active</span>';
+            else span.innerHTML = '<span class="status-offline">❌ Offline - Run python app.py</span>';
+        } catch(e) {
+            span.innerHTML = '<span class="status-offline">❌ Offline - Run python app.py</span>';
+        }
+    }
+
+    async function searchMultiPlatform() {
+        const query = document.getElementById('searchInput').value.trim();
+        if(!query) { showNotification('Please enter a search term!', 'error'); return; }
+        
+        currentSearchQuery = query;
+        currentTab = 'home';
+        updateActiveNav();
+        showLoader(true);
+        document.getElementById('results').innerHTML = '';
+        document.getElementById('sectionTitle').innerHTML = `<i class="fa fa-search"></i> Results for "${query.substring(0,30)}" on ${getPlatformName()}`;
+        
+        // Log search to Firebase
+        logToFirebase('searches', {
+            query: query,
+            platform: selectedPlatform,
+            resultsCount: 0
+        });
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    query: query, 
+                    platform: selectedPlatform,
+                    max_results: 20 
+                })
+            });
+            const data = await response.json();
+            
+            if(data.success && data.results.length > 0) {
+                currentResults = data.results;
+                displayResults(data.results);
+                showNotification(`Found ${data.results.length} videos from ${getPlatformName()}!`);
+                document.getElementById('batchDownloadBtn').style.display = 'block';
+                
+                // Update search log with results count
+                logToFirebase('searches', {
+                    query: query,
+                    platform: selectedPlatform,
+                    resultsCount: data.results.length
+                });
+            } else {
+                document.getElementById('results').innerHTML = `<div class="empty-state"><i class="fa fa-frown-o fa-3x"></i><br>No videos found. Try another search.</div>`;
+                document.getElementById('batchDownloadBtn').style.display = 'none';
+            }
+        } catch(e) {
+            document.getElementById('results').innerHTML = `<div class="empty-state"><i class="fa fa-exclamation-triangle fa-3x"></i><br>Backend is not running. Run "python app.py"</div>`;
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    async function extractFromLink() {
+        const url = document.getElementById('urlInput').value.trim();
+        if(!url) { showNotification('Please paste a video link!', 'error'); return; }
+        
+        showLoader(true);
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/extract/link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            const data = await response.json();
+            
+            if(data.success) {
+                const video = [{
+                    id: Date.now().toString(),
+                    title: data.title,
+                    url: url,
+                    thumbnail: data.thumbnail || 'https://via.placeholder.com/320x180?text=Video',
+                    channel: `From ${data.platform.toUpperCase()}`,
+                    duration: data.duration,
+                    platform: data.platform
+                }];
+                displayResults(video);
+                showNotification(`Video extracted from ${data.platform.toUpperCase()}!`);
+                
+                logToFirebase('extractions', {
+                    url: url,
+                    platform: data.platform,
+                    title: data.title
+                });
+            } else {
+                showNotification('Failed to extract video info', 'error');
+            }
+        } catch(e) {
+            showNotification('Error extracting video', 'error');
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    async function batchDownload() {
+        if(currentResults.length === 0) return;
+        
+        const urls = currentResults.map(v => v.url);
+        showNotification(`Starting batch download of ${urls.length} videos...`);
+        
+        logToFirebase('batch_downloads', {
+            count: urls.length,
+            urls: urls.slice(0, 5)
+        });
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/download/batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ urls: urls, quality: '720p' })
+            });
+            const data = await response.json();
+            if(data.success) {
+                const successCount = data.results.filter(r => r.status === 'success').length;
+                showNotification(`Batch download completed! ${successCount} videos downloaded.`);
+                
+                logToFirebase('batch_results', {
+                    total: urls.length,
+                    success: successCount,
+                    failed: urls.length - successCount
+                });
+            }
+        } catch(e) {
+            showNotification('Batch download failed', 'error');
+        }
+    }
+
+    async function loadTrending() {
+        showLoader(true);
+        document.getElementById('results').innerHTML = '';
+        document.getElementById('sectionTitle').innerHTML = `<i class="fa fa-fire"></i> Trending Videos 🔥`;
+        document.getElementById('batchDownloadBtn').style.display = 'none';
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/trending?platform=youtube`);
+            const data = await response.json();
+            
+            if(data.success && data.videos.length > 0) {
+                currentResults = data.videos;
+                displayResults(data.videos);
+                showNotification(`Loaded ${data.videos.length} trending videos!`);
+            } else {
+                document.getElementById('results').innerHTML = `<div class="empty-state"><i class="fa fa-fire"></i><br>No trending videos found.</div>`;
+            }
+        } catch(e) {
+            document.getElementById('results').innerHTML = `<div class="empty-state"><i class="fa fa-exclamation-triangle"></i><br>Error loading trending videos.</div>`;
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    async function loadPestSettings() {
+        showLoader(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/pest/stats`);
+            const stats = await res.json();
+            document.getElementById('results').innerHTML = `
+                <div class="pest-panel">
+                    <h3><i class="fa fa-cogs"></i> PEST Technology Stats</h3>
+                    <div class="pest-stats">
+                        <div class="stat-card">
+                            <i class="fa fa-database"></i>
+                            <div><strong>${stats.cache_files}</strong></div>
+                            <small>Cached Files</small>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-hdd-o"></i>
+                            <div><strong>${stats.cache_size_mb} MB</strong></div>
+                            <small>Cache Size</small>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-rocket"></i>
+                            <div><strong>Active</strong></div>
+                            <small>PEST Status</small>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <p><i class="fa fa-check-circle" style="color: #22c55e;"></i> <strong>Features:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✅ Multi-Platform Search (YouTube, Facebook, TikTok)</li>
+                            <li>✅ Direct Link Extraction</li>
+                            <li>✅ Batch Download Support</li>
+                            <li>✅ Smart Caching System</li>
+                            <li>✅ Multiple Quality Options (360p/720p/1080p/MP3)</li>
+                            <li>✅ Firebase Integration</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } catch(e) {
+            document.getElementById('results').innerHTML = `<div class="empty-state">Error loading PEST stats</div>`;
+        } finally {
+            showLoader(false);
+        }
+    }
+
+    function displayResults(videos) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = videos.map(video => {
+            const platform = video.platform || getPlatformFromUrl(video.url);
+            const platformIcon = getPlatformIcon(platform);
+            const artistPhoto = video.artist_photo || '';
+            return `
+            <div class="video-card" data-video-id="${video.id}" data-video-url="${video.url}" data-video-title="${escapeHtml(video.title)}" data-platform="${platform}">
+                <div style="position: relative;">
+                    <span class="platform-badge platform-${platform}">
+                        <i class="fa ${platformIcon}"></i> ${platform.toUpperCase()}
+                    </span>
+                    <img class="thumbnail" src="${video.thumbnail}" alt="${escapeHtml(video.title)}" onerror="this.src='https://via.placeholder.com/320x180?text=No+Image'">
+                    ${video.duration ? `<span class="duration">${formatDuration(video.duration)}</span>` : ''}
+                </div>
+                <div class="video-info">
+                    <div class="video-title" onclick="openInAppPlayer('${video.url}')">${escapeHtml(video.title.substring(0, 70))}</div>
+                    <div class="video-channel">
+                        <span class="video-side-meta">
+                            ${artistPhoto ? `<img class="artist-photo" src="${artistPhoto}" alt="${escapeHtml((video.channel || 'Artist'))}" onerror="this.style.display='none'">` : ''}
+                            <span><i class="fa fa-user"></i> ${escapeHtml(video.channel || 'Artist')}</span>
+                        </span>
+                    </div>
+                    <div class="download-buttons">
+                        <button class="quality-btn" onclick="event.stopPropagation(); downloadVideo('${video.url}', '360p', false, this, '${platform}', '${escapeHtml(video.title)}')">🎬 360p</button>
+                        <button class="quality-btn" onclick="event.stopPropagation(); downloadVideo('${video.url}', '720p', false, this, '${platform}', '${escapeHtml(video.title)}')">🎬 720p</button>
+                        <button class="quality-btn" onclick="event.stopPropagation(); downloadVideo('${video.url}', '1080p', false, this, '${platform}', '${escapeHtml(video.title)}')">🎬 1080p</button>
+                        <button class="quality-btn audio" onclick="event.stopPropagation(); downloadVideo('${video.url}', 'audio', true, this, '${platform}', '${escapeHtml(video.title)}')">🎵 MP3</button>
+                        <button class="play-audio-btn" onclick="event.stopPropagation(); playAudio('${video.url}', this, '${platform}', '${escapeHtml(video.title)}')">▶ Play</button>
+                    </div>
+                    <div class="progress-container" id="progress-${video.id}">
+                        <div class="progress-bar"><div class="progress-fill" id="progress-fill-${video.id}"></div></div>
+                        <div class="progress-text" id="progress-text-${video.id}">0%</div>
+                        <div class="download-status" id="status-${video.id}"></div>
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+    }
+
+    async function downloadVideo(videoUrl, quality, isAudio, buttonElement, platform, videoTitle) {
+        const videoCard = buttonElement.closest('.video-card');
+        const videoId = videoCard.dataset.videoId;
+        const progressContainer = document.getElementById(`progress-${videoId}`);
+        const progressFill = document.getElementById(`progress-fill-${videoId}`);
+        const progressText = document.getElementById(`progress-text-${videoId}`);
+        const statusDiv = document.getElementById(`status-${videoId}`);
+        
+        progressContainer.style.display = 'block';
+        
+        const buttons = videoCard.querySelectorAll('.quality-btn');
+        buttons.forEach(btn => btn.disabled = true);
+        
+        statusDiv.innerHTML = '⏳ Starting download...';
+        statusDiv.style.color = '#ff9800';
+        
+        // Log download start to Firebase
+        logToFirebase('downloads', {
+            videoUrl: videoUrl,
+            title: videoTitle,
+            platform: platform,
+            quality: quality,
+            isAudio: isAudio,
+            status: 'started'
+        });
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/download`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: videoUrl,
+                    quality: quality,
+                    is_audio: isAudio,
+                    platform: platform
+                })
+            });
+            
+            if(response.ok) {
+                simulateProgress(progressFill, progressText, statusDiv);
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const extension = isAudio ? 'mp3' : 'mp4';
+                a.download = `${platform}_video_${Date.now()}.${extension}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                progressFill.style.width = '100%';
+                progressText.innerHTML = '100%';
+                statusDiv.innerHTML = '✅ Download completed!';
+                statusDiv.style.color = '#22c55e';
+                
+                // Log successful download to Firebase
+                logToFirebase('downloads', {
+                    videoUrl: videoUrl,
+                    title: videoTitle,
+                    platform: platform,
+                    quality: quality,
+                    isAudio: isAudio,
+                    status: 'completed'
+                });
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 4000);
+            } else {
+                throw new Error('Download failed');
+            }
+        } catch(error) {
+            statusDiv.innerHTML = '❌ Download failed. Please try again.';
+            statusDiv.style.color = '#ef4444';
+            
+            // Log failed download to Firebase
+            logToFirebase('downloads', {
+                videoUrl: videoUrl,
+                title: videoTitle,
+                platform: platform,
+                quality: quality,
+                isAudio: isAudio,
+                status: 'failed',
+                error: error.message
+            });
+        } finally {
+            buttons.forEach(btn => btn.disabled = false);
+        }
+    }
+
+    function getPlatformFromUrl(url) {
+        if(url.includes('youtube') || url.includes('youtu.be')) return 'youtube';
+        if(url.includes('facebook') || url.includes('fb.watch')) return 'facebook';
+        if(url.includes('tiktok')) return 'tiktok';
+        return 'unknown';
+    }
+
+    function getPlatformIcon(platform) {
+        switch(platform) {
+            case 'youtube': return 'fa-youtube-play';
+            case 'facebook': return 'fa-facebook';
+            case 'tiktok': return 'fa-music';
+            default: return 'fa-video-camera';
+        }
+    }
+
+    function getPlatformName() {
+        switch(selectedPlatform) {
+            case 'all': return 'All Platforms';
+            case 'youtube': return 'YouTube';
+            case 'facebook': return 'Facebook';
+            case 'tiktok': return 'TikTok';
+            default: return 'All Platforms';
+        }
+    }
+
+    function simulateProgress(progressFill, progressText, statusDiv) {
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15;
+            if(progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+            }
+            progressFill.style.width = `${progress}%`;
+            progressText.innerHTML = `${Math.floor(progress)}%`;
+            if(progress > 50) statusDiv.innerHTML = '📥 Downloading...';
+        }, 300);
+    }
+
+    function openInAppPlayer(videoUrl) {
+        const modal = document.getElementById('playerModal');
+        const video = document.getElementById('playerVideo');
+        const audio = document.getElementById('playerAudio');
+
+        video.style.display = 'none';
+        audio.style.display = 'none';
+        video.pause();
+        audio.pause();
+
+        video.style.display = 'block';
+        video.src = videoUrl;
+        video.load();
+        modal.classList.add('active');
+        video.play().catch(e => console.log('Auto-play blocked'));
+
+        logToFirebase('plays', { videoUrl: videoUrl });
+    }
+
+    function openInAppAudioPlayer(audioUrl) {
+        const modal = document.getElementById('playerModal');
+        const video = document.getElementById('playerVideo');
+        const audio = document.getElementById('playerAudio');
+
+        video.style.display = 'none';
+        audio.style.display = 'none';
+        video.pause();
+        audio.pause();
+
+        audio.style.display = 'block';
+        audio.src = audioUrl;
+        audio.load();
+        modal.classList.add('active');
+        audio.play().catch(e => console.log('Auto-play blocked'));
+
+        logToFirebase('plays', { audioUrl: audioUrl });
+    }
+
+    async function playAudio(videoUrl, buttonElement, platform, videoTitle) {
+        const videoCard = buttonElement.closest('.video-card');
+        const video = document.getElementById('playerVideo');
+        const audio = document.getElementById('playerAudio');
+
+        video.pause();
+        video.style.display = 'none';
+
+        openInAppAudioPlayer(videoUrl);
+    }
+
+    function closePlayer() {
+        const modal = document.getElementById('playerModal');
+        const video = document.getElementById('playerVideo');
+        const audio = document.getElementById('playerAudio');
+        video.pause();
+        audio.pause();
+        modal.classList.remove('active');
+    }
+
+    function formatDuration(seconds) {
+        if(!seconds) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2,'0')}`;
+    }
+
+    function showLoader(show) { 
+        document.getElementById('loader').style.display = show ? 'block' : 'none'; 
+    }
+    
+    function showNotification(msg, type = 'success') {
+        const notif = document.getElementById('notification');
+        notif.textContent = msg;
+        notif.style.background = type === 'error' ? '#ef4444' : '#22c55e';
+        notif.classList.add('show');
+        setTimeout(() => notif.classList.remove('show'), 3000);
+    }
+
+    function updateActiveNav() {
+        document.querySelectorAll('.nav-item[data-tab]').forEach(item => item.classList.remove('active'));
+        document.querySelector(`.nav-item[data-tab="${currentTab}"]`)?.classList.add('active');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function toggleMode() {
+        document.body.classList.toggle('light');
+        const btn = document.getElementById('themeToggle');
+        if(document.body.classList.contains('light')) { 
+            btn.innerHTML = '☀️'; 
+            localStorage.setItem('theme', 'light'); 
+        } else { 
+            btn.innerHTML = '🌙'; 
+            localStorage.setItem('theme', 'dark'); 
+        }
+    }
+
+    function loadTheme() {
+        if(localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light');
+            document.getElementById('themeToggle').innerHTML = '☀️';
+        }
+    }
+
+    // SIDEBAR TOGGLE
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    function openSidebar() {
+        if(window.innerWidth <= 768) {
+            sidebar.classList.add('mobile-open');
+            if(sidebarOverlay) sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        if(sidebarOverlay) sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    if(menuToggle) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(sidebar.classList.contains('mobile-open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+    }
+    
+    if(sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if(window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        });
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+            closeSidebar();
+        }
+    });
+    
+    window.addEventListener('resize', () => {
+        if(window.innerWidth > 768) {
+            closeSidebar();
+            sidebar.classList.remove('mobile-open');
+        }
+    });
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        if(touchStartX - touchEndX > 100 && sidebar.classList.contains('mobile-open')) {
+            closeSidebar();
+        }
+    });
+
+    // EVENT LISTENERS
+    document.querySelectorAll('.platform-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPlatform = btn.dataset.platform;
+            if(currentSearchQuery) searchMultiPlatform();
+        });
+    });
+
+    document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+        item.addEventListener('click', () => {
+            const tab = item.dataset.tab;
+            currentTab = tab;
+            updateActiveNav();
+            if(tab === 'trending') loadTrending();
+            else if(tab === 'home') {
+                if(currentSearchQuery) searchMultiPlatform();
+                else document.getElementById('results').innerHTML = `<div class="empty-state"><i class="fa fa-youtube-play fa-3x"></i><br>Search for videos or paste a link!</div>`;
+                document.getElementById('batchDownloadBtn').style.display = 'none';
+            } else if(tab === 'downloads') {
+                document.getElementById('results').innerHTML = `<div class="empty-state"><i class="fa fa-download fa-3x"></i><br>Your downloads appear in your browser's download folder</div>`;
+                document.getElementById('batchDownloadBtn').style.display = 'none';
+            } else if(tab === 'pest') {
+                loadPestSettings();
+                document.getElementById('batchDownloadBtn').style.display = 'none';
+            }
+        });
+    });
+
+    document.getElementById('clearCache').addEventListener('click', async () => {
+        if(confirm('Are you sure you want to clear all cached files?')) {
+            try {
+                await fetch(`${BACKEND_URL}/api/cleanup`, { method: 'POST' });
+                showNotification('Cache cleared successfully!');
+                logToFirebase('admin_actions', { action: 'clear_cache' });
+            } catch(e) {
+                showNotification('Failed to clear cache', 'error');
+            }
+        }
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', toggleMode);
+
+    // Initialize everything
+    loadTheme();
+    checkBackend();
+    initFirebase();
+    setInterval(checkBackend, 15000);
+    loadTrending();
+</script>
+</body>
+</html>
