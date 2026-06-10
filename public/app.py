@@ -218,6 +218,10 @@ def health_check():
 
 # ===================== Download API =====================
 
+@app.route("/api/extract/link", methods=["POST"])
+def extract_video_link():
+    return extract_video()
+
 @app.route("/api/extract", methods=["POST"])
 def extract_video():
     data = request.get_json(silent=True) or {}
@@ -621,6 +625,79 @@ def cleanup_downloads():
         return jsonify({"success": True, "message": "Cache cleaned successfully"})
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)}), 500
+
+
+@app.route("/api/stream", methods=["POST"])
+def stream_video():
+    data = request.get_json(silent=True) or {}
+    url = data.get("url")
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+
+    platform = detect_platform(url)
+    file_id = hashlib.md5(f"{url}_stream_{time.time()}".encode()).hexdigest()[:10]
+    out_template = str(TEMP_DIR / f"stream_{file_id}_%(title)s_%(id)s.%(ext)s")
+    opts = platform_opts(platform, quality="720p", is_audio=False)
+    opts["outtmpl"] = out_template
+
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            meta = ydl.extract_info(url, download=True)
+
+        candidates = list(TEMP_DIR.glob(f"stream_{file_id}_*"))
+        if not candidates:
+            return jsonify({"error": "File not found after processing"}), 500
+
+        candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        media_path = candidates[0]
+        return send_file(
+            media_path,
+            as_attachment=False,
+            mimetype="video/mp4",
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/pest/stats", methods=["GET"])
+def pest_stats():
+    cache_files = len(list(TEMP_DIR.glob("*")))
+    cache_size = sum(f.stat().st_size for f in TEMP_DIR.glob("*") if f.is_file())
+    return jsonify({
+        "cache_files": cache_files,
+        "cache_size_mb": round(cache_size / 1024 / 1024, 2)
+    })
+
+
+@app.route("/api/download/batch", methods=["POST"])
+def batch_download():
+    data = request.get_json(silent=True) or {}
+    urls = data.get("urls", [])
+    quality = data.get("quality", "720p")
+
+    if not urls:
+        return jsonify({"success": False, "error": "No URLs provided"}), 400
+
+    results = []
+    for url in urls:
+        try:
+            platform = detect_platform(url)
+            file_id = hashlib.md5(f"{url}_{quality}_{time.time()}".encode()).hexdigest()[:10]
+            out_template = str(TEMP_DIR / f"batch_{file_id}_%(title)s_%(id)s.%(ext)s")
+            opts = platform_opts(platform, quality=quality, is_audio=False)
+            opts["outtmpl"] = out_template
+
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                ydl.download([url])
+
+            candidates = list(TEMP_DIR.glob(f"batch_{file_id}_*"))
+            downloaded = candidates[0] if candidates else None
+
+            results.append({"url": url, "status": "success" if downloaded else "failed"})
+        except Exception as exc:
+            results.append({"url": url, "status": "failed", "error": str(exc)})
+
+    return jsonify({"success": True, "results": results})
 
 
 if __name__ == "__main__":

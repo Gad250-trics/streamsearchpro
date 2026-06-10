@@ -526,11 +526,85 @@
             margin: 0 auto;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .play-overlay-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(34, 197, 94, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 2;
+}
 
-        .empty-state {
+.play-overlay-btn:hover {
+    background: rgba(34, 197, 94, 1);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.play-overlay-btn {
+    display: none;
+}
+
+.video-card:hover .play-overlay-btn {
+    display: block;
+}
+
+.speed-indicator {
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 4px;
+    text-align: center;
+}
+
+.play-overlay-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(34, 197, 94, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.play-overlay-btn:hover {
+    background: rgba(34, 197, 94, 1);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.play-overlay-btn {
+    display: none;
+}
+
+.video-card:hover .play-overlay-btn {
+    display: block;
+}
+
+.speed-indicator {
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 4px;
+    text-align: center;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-state {
             text-align: center;
             padding: 60px;
             color: var(--text-secondary);
@@ -622,6 +696,14 @@
             .section-title {
                 font-size: 18px;
             }
+            /* Kuri smartphone */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+    padding: 10px;
+  }
+  /* ubundi buryo bwo guhuza */
+}
         }
 
         @media (min-width: 769px) {
@@ -871,7 +953,7 @@
         
         showLoader(true);
         try {
-            const response = await fetch(`${BACKEND_URL}/api/extract/link`, {
+            const response = await fetch(`${BACKEND_URL}/api/extract`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: url })
@@ -1016,13 +1098,14 @@
             const artistPhoto = video.artist_photo || '';
             return `
             <div class="video-card" data-video-id="${video.id}" data-video-url="${video.url}" data-video-title="${escapeHtml(video.title)}" data-platform="${platform}">
-                <div style="position: relative;">
-                    <span class="platform-badge platform-${platform}">
-                        <i class="fa ${platformIcon}"></i> ${platform.toUpperCase()}
-                    </span>
-                    <img class="thumbnail" src="${video.thumbnail}" alt="${escapeHtml(video.title)}" onerror="this.src='https://via.placeholder.com/320x180?text=No+Image'">
-                    ${video.duration ? `<span class="duration">${formatDuration(video.duration)}</span>` : ''}
-                </div>
+<div style="position: relative;">
+                     <span class="platform-badge platform-${platform}">
+                         <i class="fa ${platformIcon}"></i> ${platform.toUpperCase()}
+                     </span>
+                     <img class="thumbnail" src="${video.thumbnail}" alt="${escapeHtml(video.title)}" onerror="this.src='https://via.placeholder.com/320x180?text=No+Image'">
+                     ${video.duration ? `<span class="duration">${formatDuration(video.duration)}</span>` : ''}
+                     <button class="play-overlay-btn" onclick="event.stopPropagation(); playVideo('${video.url}', '${platform}', '${escapeHtml(video.title)}')"><i class="fa fa-play"></i></button>
+                 </div>
                 <div class="video-info">
                     <div class="video-title" onclick="openInAppPlayer('${video.url}')">${escapeHtml(video.title.substring(0, 70))}</div>
                     <div class="video-channel">
@@ -1038,10 +1121,11 @@
                         <button class="quality-btn audio" onclick="event.stopPropagation(); downloadVideo('${video.url}', 'audio', true, this, '${platform}', '${escapeHtml(video.title)}')">🎵 MP3</button>
                         <button class="play-audio-btn" onclick="event.stopPropagation(); playAudio('${video.url}', this, '${platform}', '${escapeHtml(video.title)}')">▶ Play</button>
                     </div>
-                    <div class="progress-container" id="progress-${video.id}">
+<div class="progress-container" id="progress-${video.id}">
                         <div class="progress-bar"><div class="progress-fill" id="progress-fill-${video.id}"></div></div>
                         <div class="progress-text" id="progress-text-${video.id}">0%</div>
                         <div class="download-status" id="status-${video.id}"></div>
+                        <div class="speed-indicator" id="speed-${video.id}" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -1055,8 +1139,10 @@
         const progressFill = document.getElementById(`progress-fill-${videoId}`);
         const progressText = document.getElementById(`progress-text-${videoId}`);
         const statusDiv = document.getElementById(`status-${videoId}`);
+        const speedDiv = document.getElementById(`speed-${videoId}`);
         
         progressContainer.style.display = 'block';
+        if(speedDiv) speedDiv.style.display = 'block';
         
         const buttons = videoCard.querySelectorAll('.quality-btn');
         buttons.forEach(btn => btn.disabled = true);
@@ -1064,7 +1150,6 @@
         statusDiv.innerHTML = '⏳ Starting download...';
         statusDiv.style.color = '#ff9800';
         
-        // Log download start to Firebase
         logToFirebase('downloads', {
             videoUrl: videoUrl,
             title: videoTitle,
@@ -1075,6 +1160,9 @@
         });
         
         try {
+            const startTime = Date.now();
+            let loadedBytes = 0;
+            
             const response = await fetch(`${BACKEND_URL}/api/download`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1087,9 +1175,35 @@
             });
             
             if(response.ok) {
-                simulateProgress(progressFill, progressText, statusDiv);
+                const contentLength = response.headers.get('Content-Length');
+                const totalBytes = contentLength ? parseInt(contentLength) : 0;
                 
-                const blob = await response.blob();
+                const reader = response.body.getReader();
+                const chunks = [];
+                
+                while(true) {
+                    const { done, value } = await reader.read();
+                    if(done) break;
+                    chunks.push(value);
+                    loadedBytes += value.length;
+                    
+                    if(totalBytes > 0) {
+                        const progress = Math.min(100, (loadedBytes / totalBytes) * 100);
+                        progressFill.style.width = `${progress}%`;
+                        progressText.innerHTML = `${Math.floor(progress)}%`;
+                    }
+                    
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const speedMbps = (loadedBytes / elapsed / 1024 / 1024).toFixed(2);
+                    if(speedDiv) speedDiv.innerHTML = `⚡ ${speedMbps} MB/s`;
+                    
+                    if(loadedBytes > 500000) {
+                        statusDiv.innerHTML = '📥 Downloading...';
+                        statusDiv.style.color = '#22c55e';
+                    }
+                }
+                
+                const blob = new Blob(chunks);
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1105,7 +1219,6 @@
                 statusDiv.innerHTML = '✅ Download completed!';
                 statusDiv.style.color = '#22c55e';
                 
-                // Log successful download to Firebase
                 logToFirebase('downloads', {
                     videoUrl: videoUrl,
                     title: videoTitle,
@@ -1117,6 +1230,7 @@
                 
                 setTimeout(() => {
                     progressContainer.style.display = 'none';
+                    if(speedDiv) speedDiv.style.display = 'none';
                     progressFill.style.width = '0%';
                 }, 4000);
             } else {
@@ -1126,7 +1240,6 @@
             statusDiv.innerHTML = '❌ Download failed. Please try again.';
             statusDiv.style.color = '#ef4444';
             
-            // Log failed download to Firebase
             logToFirebase('downloads', {
                 videoUrl: videoUrl,
                 title: videoTitle,
@@ -1228,6 +1341,50 @@
         video.style.display = 'none';
 
         openInAppAudioPlayer(videoUrl);
+    }
+
+    async function playVideo(videoUrl, platform, videoTitle) {
+        const modal = document.getElementById('playerModal');
+        const video = document.getElementById('playerVideo');
+        const audio = document.getElementById('playerAudio');
+        const loader = document.querySelector('.loader');
+        
+        video.style.display = 'none';
+        audio.style.display = 'none';
+        video.pause();
+        audio.pause();
+        
+        modal.classList.add('active');
+        showLoader(true);
+        
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: videoUrl,
+                    quality: '720p',
+                    is_audio: false,
+                    platform: platform
+                })
+            });
+            
+            if(response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                video.style.display = 'block';
+                video.src = url;
+                video.play().catch(e => console.log('Auto-play blocked'));
+                logToFirebase('plays', { videoUrl: videoUrl });
+            } else {
+                throw new Error('Failed to stream video');
+            }
+        } catch(error) {
+            showNotification('Failed to play video', 'error');
+            closePlayer();
+        } finally {
+            showLoader(false);
+        }
     }
 
     function closePlayer() {
