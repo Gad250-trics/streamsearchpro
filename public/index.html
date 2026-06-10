@@ -605,113 +605,105 @@
 }
 
 .empty-state {
-            text-align: center;
-            padding: 60px;
-            color: var(--text-secondary);
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--accent);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 1003;
-            transform: translateX(400px);
-            transition: transform 0.3s;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .pest-panel {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .pest-stats {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        .stat-card {
-            flex: 1;
-            background: var(--bg-primary);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-card i {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .menu-toggle {
-                display: block;
-            }
-            .top-bar {
-                padding: 12px 16px;
-            }
-            .container {
-                padding: 16px;
-            }
-            .video-grid {
-                gap: 15px;
-            }
-            .hero h1 {
-                font-size: 24px;
-            }
-            .hero p {
-                font-size: 14px;
-            }
-            .url-input-area {
-                flex-direction: column;
-            }
-            .section-title {
-                font-size: 18px;
-            }
-            /* Kuri smartphone */
-@media (max-width: 768px) {
-  body {
-    font-size: 16px;
-    padding: 10px;
-  }
-  /* ubundi buryo bwo guhuza */
+    text-align: center;
+    padding: 60px;
+    color: var(--text-secondary);
 }
-        }
 
-        @media (min-width: 769px) {
-            .menu-toggle {
-                display: none;
-            }
-        }
-    </style>
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--accent);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1003;
+    transform: translateX(400px);
+    transition: transform 0.3s;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.pest-panel {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.pest-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.stat-card {
+    flex: 1;
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-card i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0;
+    }
+    .menu-toggle {
+        display: block;
+    }
+    .top-bar {
+        padding: 12px 16px;
+    }
+    .container {
+        padding: 16px;
+    }
+    .video-grid {
+        gap: 15px;
+    }
+    .hero h1 {
+        font-size: 24px;
+    }
+    .hero p {
+        font-size: 14px;
+    }
+    .url-input-area {
+        flex-direction: column;
+    }
+    .section-title {
+        font-size: 18px;
+    }
+}
+
+@media (min-width: 769px) {
+    .menu-toggle {
+        display: none;
+    }
+}
+</style>
 </head>
 <body>
 
@@ -1104,7 +1096,7 @@
                      </span>
                      <img class="thumbnail" src="${video.thumbnail}" alt="${escapeHtml(video.title)}" onerror="this.src='https://via.placeholder.com/320x180?text=No+Image'">
                      ${video.duration ? `<span class="duration">${formatDuration(video.duration)}</span>` : ''}
-                     <button class="play-overlay-btn" onclick="event.stopPropagation(); playVideo('${video.url}', '${platform}', '${escapeHtml(video.title)}')"><i class="fa fa-play"></i></button>
+                     <button class="play-overlay-btn" onclick="event.stopPropagation(); openInAppVideoPlayer('${video.url}')"><i class="fa fa-play"></i></button>
                  </div>
                 <div class="video-info">
                     <div class="video-title" onclick="openInAppPlayer('${video.url}')">${escapeHtml(video.title.substring(0, 70))}</div>
@@ -1295,6 +1287,10 @@
     }
 
     function openInAppPlayer(videoUrl) {
+        openInAppVideoPlayer(videoUrl);
+    }
+
+    async function openInAppVideoPlayer(videoUrl) {
         const modal = document.getElementById('playerModal');
         const video = document.getElementById('playerVideo');
         const audio = document.getElementById('playerAudio');
@@ -1304,13 +1300,36 @@
         video.pause();
         audio.pause();
 
-        video.style.display = 'block';
-        video.src = videoUrl;
-        video.load();
         modal.classList.add('active');
-        video.play().catch(e => console.log('Auto-play blocked'));
+        showLoader(true);
 
-        logToFirebase('plays', { videoUrl: videoUrl });
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: videoUrl,
+                    quality: '720p',
+                    is_audio: false
+                })
+            });
+
+            if(response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                video.style.display = 'block';
+                video.src = url;
+                video.play().catch(e => console.log('Auto-play blocked'));
+                logToFirebase('plays', { videoUrl: videoUrl });
+            } else {
+                throw new Error('Failed to stream video');
+            }
+        } catch(error) {
+            showNotification('Failed to play video', 'error');
+            closePlayer();
+        } finally {
+            showLoader(false);
+        }
     }
 
     function openInAppAudioPlayer(audioUrl) {
@@ -1341,50 +1360,6 @@
         video.style.display = 'none';
 
         openInAppAudioPlayer(videoUrl);
-    }
-
-    async function playVideo(videoUrl, platform, videoTitle) {
-        const modal = document.getElementById('playerModal');
-        const video = document.getElementById('playerVideo');
-        const audio = document.getElementById('playerAudio');
-        const loader = document.querySelector('.loader');
-        
-        video.style.display = 'none';
-        audio.style.display = 'none';
-        video.pause();
-        audio.pause();
-        
-        modal.classList.add('active');
-        showLoader(true);
-        
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/stream`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: videoUrl,
-                    quality: '720p',
-                    is_audio: false,
-                    platform: platform
-                })
-            });
-            
-            if(response.ok) {
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                video.style.display = 'block';
-                video.src = url;
-                video.play().catch(e => console.log('Auto-play blocked'));
-                logToFirebase('plays', { videoUrl: videoUrl });
-            } else {
-                throw new Error('Failed to stream video');
-            }
-        } catch(error) {
-            showNotification('Failed to play video', 'error');
-            closePlayer();
-        } finally {
-            showLoader(false);
-        }
     }
 
     function closePlayer() {

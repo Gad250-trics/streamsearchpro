@@ -688,7 +688,7 @@ def batch_download():
             opts["outtmpl"] = out_template
 
             with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([url])
+                ydl.extract_info(url, download=True)
 
             candidates = list(TEMP_DIR.glob(f"batch_{file_id}_*"))
             downloaded = candidates[0] if candidates else None
